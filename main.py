@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.params import Body
 from pydantic import BaseModel
 from typing import Optional
+from random import randrange
 
 app = FastAPI()
 
@@ -11,7 +12,6 @@ class Post(BaseModel):
 	content: str
 	published: bool = True
 	rating: Optional[int] = None
-
 
 
 my_posts = [{"title": "title of post 1", "content": "content of post 1", "id": 1}, {"title": "favourite foods", "content": "I like pizza", "id": 2}]
@@ -29,11 +29,7 @@ def get_posts():
 
 @app.post("/posts")
 def create_post(post: Post):
-	print(post.rating)  				# post.title, post.content etc available
-	print(post.model_dump())		# same as post.dict()
-	
-	return {"data": post}
-
-#title(string), content(string), category, Boolean published
-
-#why i am getting method not allowed???
+	post_dict = post.model_dump()
+	post_dict['id'] = randrange(0, 1000000)
+	my_posts.append(post_dict)
+	return {"data": post_dict}
