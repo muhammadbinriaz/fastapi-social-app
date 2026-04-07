@@ -53,64 +53,63 @@ def root():
   return {"message": "welcome to my api"}
 
 
-@app.get("sqlalchemy")
+@app.get("/sqlalchemy")
 def test_posts(db: Session = Depends(get_db)):
   posts = db.query(models.Post).all()
-  return {"data": "success"}
-
+  print(posts)
+  return {"data": "succhess"}
 
 
 @app.get("/posts")
-def get_posts():
-  cursor.execute("""SELECT * FROM posts""")
-  posts = cursor.fetchall()
+def get_posts(db: Session = Depends(get_db)):
+
+  posts = db.query(models.Post).all()
   return {"data": posts}
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: Post):
-  cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""", (post.title, post.content, post.published))
-  new_post = cursor.fetchone()
-  conn.commit()
-  print(new_post)
+def create_post(post: Post, db: Session = Depends(get_db)):
+
+  new_post = models.Post(**post.model_dump())
+  db.add(new_post)
+  db.commit()
+  db.refresh(new_post)
   return {"data": new_post}
-	# return {"data": "created post"}
-
-# there is inter collision between /posts/latest_post and /posts/{id}, so order matters and we put latest_post route above because of that
-
 
 
 @app.get("/posts/{id}")
-def get_post(id: int, response: Response):
-  cursor.execute("""SELECT * from posts WHERE id = %s """, (id,)) # we put (id,) inplace of str(id) as (id,) creates a single-item tuple, and psycopg2 execute() method expects second arg values to be sequence like tuple or list, and we don't need to convert id to a string; psycopg2 handles the type conversion automatically. 
-  post = cursor.fetchone()
+def get_post(id: int, response: Response,  db: Session = Depends(get_db)):
+
+  post = db.query(models.Post).filter(models.Post.id == id).first()
 
   if not post:
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"page with id {id} was not found!")
-    #response.status_code = status.HTTP_404_NOT_FOUND
-    #return {"message": f"page with id {id} was not found bruh!"}
   return {"message": post}
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)	
-def delete_post(id: int):
-  
-  cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING *""", (id,))
-  deleted_post = cursor.fetchone()
-  conn.commit()
+def delete_post(id: int, db: Session = Depends(get_db)):
 
-  if deleted_post == None:
+  post_query = db.query(models.Post).filter(models.Post.id == id)
+
+  if post_query.first() == None:
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"page with id {id} was not found!")
+
+  post_query.delete(synchronize_session=False)
+  db.commit()
   return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.put("/posts/{id}")
-def update_post(id: int, post: Post):
-  
-  cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""", (post.title, post.content, post.published, id))
-  updated_post = cursor.fetchone()
-  conn.commit()
+def update_post(id: int, updated_post: Post, db: Session = Depends(get_db)):
 
-  if updated_post == None:
+  post_query = db.query(models.Post).filter(models.Post.id == id)
+  post = post_query.first()
+
+  if post == None:
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"page with id {id} was not found!")
-  return {"data": updated_post}
+
+  post_query.update(dict(updated_post), synchronize_session=False)
+  db.commit()
+
+  return {"data": post_query.first()}
