@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 SQLALCHEMY_DATABASE_URL = "postgresql://postgres:111222333%40pak@localhost:5432/fastapi" # we used %40 instead of @ as @ is special separator, and %40 tells SQLAlchemy this is a part of password
 
