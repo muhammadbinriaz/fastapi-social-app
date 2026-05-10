@@ -1,47 +1,11 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends
-from fastapi.params import Body
-from pydantic import BaseModel
-from typing import Optional, List
-from random import randrange
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import time
 from sqlalchemy.orm import Session
 from  . import models, schemas
 from .database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
 
-
 app = FastAPI()
-
-
-while True:	
-
-		try:
-			conn = psycopg2.connect(host='localhost', database='fastapi', user='postgres', password='111222333@pak', cursor_factory=RealDictCursor)
-			cursor = conn.cursor()
-			print("Database connection was successful!")
-			break
-		except Exception as error:
-			print("Connection to database failed!")
-			print("Error: ", error)
-time.sleep(2)
-
-
-my_posts = [{"title": "title of post 1", "content": "content of post 1", "id": 1}, {"title": "favourite foods", "content": "I like pizza", "id": 2}]
-
-def find_post(id):
-  for p in my_posts:
-    if p['id'] == id:
-      return p
-
-
-def find_index_post(id):
-  for i, p in enumerate(my_posts):
-			if p['id'] == id:
-				return i
-
 
 @app.get("/")
 def root():
@@ -98,7 +62,7 @@ def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends
   if post == None:
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"page with id {id} was not found!")
 
-  post_query.update(dict(updated_post), synchronize_session=False)
+  post_query.update(updated_post.model_dump(), synchronize_session=False)
   db.commit()
 
   return post_query.first()
