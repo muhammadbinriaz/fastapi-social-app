@@ -26,7 +26,7 @@ def create_post(
   current_user: schemas.TokenData = Depends(oauth2.get_current_user),
 ):
 
-  print(current_user)
+  print(current_user.email)
   new_post = models.Post(**post.model_dump())
   db.add(new_post)
   db.commit()
@@ -80,7 +80,7 @@ def update_post(
   if post == None:
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"page with id {id} was not found!")
 
-  post_query.update(**updated_post.model_dump(), synchronize_session=False)
+  post_query.update(**updated_post.model_dump(), synchronize_session=False) # if we remove **, it shows error when we try tp update a post, so putting ** at the start is just temporary solution to avoid red flags in our code
   db.commit()
 
   return post_query.first()
