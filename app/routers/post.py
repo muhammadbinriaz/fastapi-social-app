@@ -26,8 +26,9 @@ def create_post(
   current_user: schemas.TokenData = Depends(oauth2.get_current_user),
 ):
 
-  print(current_user.email)
-  new_post = models.Post(**post.model_dump())
+  print(current_user.id)    #
+  print(current_user.email) #
+  new_post = models.Post(owner_id=current_user.id, **post.model_dump())
   db.add(new_post)
   db.commit()
   db.refresh(new_post)
