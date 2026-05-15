@@ -58,9 +58,13 @@ def delete_post(
 ):
 
   post_query = db.query(models.Post).filter(models.Post.id == id)
+  post = post_query.first()
 
-  if post_query.first() == None:
+  if post is None:
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"page with id {id} was not found!")
+
+  if post.owner_id != current_user.id:    
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform requested action")
 
   post_query.delete(synchronize_session=False)
   db.commit()
@@ -80,8 +84,11 @@ def update_post(
 
   if post == None:
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"page with id {id} was not found!")
+  
+  if post.owner_id != current_user.id:    
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform requested action")
 
-  post_query.update(**updated_post.model_dump(), synchronize_session=False) # if we remove **, it shows error when we try tp update a post, so putting ** at the start is just temporary solution to avoid red flags in our code
+  post_query.update(updated_post.model_dump(), synchronize_session=False) # if we remove **, it shows error when we try tp update a post, so putting ** at the start is just temporary solution to avoid red flags in our code
   db.commit()
 
   return post_query.first()
