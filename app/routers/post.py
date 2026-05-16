@@ -17,8 +17,7 @@ def get_posts(
   skip: int = 0,
   search: str | None = None,
 ):
-  print(limit)
-  print(search)
+
   posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
   return posts
 
@@ -30,8 +29,6 @@ def create_post(
   current_user: schemas.TokenData = Depends(oauth2.get_current_user),
 ):
 
-  print(current_user.id)    #
-  print(current_user.email) #
   new_post = models.Post(owner_id=current_user.id, **post.model_dump())
   db.add(new_post)
   db.commit()
