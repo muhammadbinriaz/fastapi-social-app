@@ -24,7 +24,7 @@ def test_add(num1, num2, expected):
 
 
 def test_subtract():
-    assert subtract(9, 4) == 999
+    assert subtract(9, 4) == 5
 
 
 def test_multiply():
